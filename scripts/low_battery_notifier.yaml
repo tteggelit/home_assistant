@@ -1,0 +1,75 @@
+alias: Low Battery Notification and Todo Generator
+sequence:
+  - variables:
+      project:
+        entity_id: todo.personal
+        name: Personal
+  - service: todo.get_items
+    target:
+      entity_id: "{{ project.entity_id }}"
+    data:
+      status: needs_action
+    response_variable: all_todos
+  - variables:
+      # Battery in percent to notify if lower than
+      threshold: 20
+      exclude:
+        entity_id:
+          - sensor.driveway_pathlight_1_battery
+          - sensor.driveway_pathlight_2_battery
+          - sensor.driveway_pathlight_3_battery
+          - sensor.driveway_pathlight_4_battery
+          - sensor.driveway_pathlight_5_battery
+          - sensor.driveway_pathlight_6_battery
+          - sensor.driveway_pathlight_7_battery
+          - sensor.driveway_pathlight_8_battery
+          - sensor.tis_iphone_battery_level
+          - sensor.amys_iphone_battery_level
+      sensors: >-
+        {## This will hold all the sensors with low batteries ##}
+        {% set result = namespace(sensors=[]) -%}
+        {## First check sensors that have a battery device_class ##}
+        {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery') -%}
+          {% if 0 <= state.state | int(-1) < threshold | int and not state.entity_id in exclude.entity_id -%}
+            {% set result.sensors = result.sensors + [state.name|replace(' Battery', '')|replace(' battery', '')] -%}
+          {% endif -%}
+        {% endfor -%}
+        {## Next check binary sensors that have a battery device_class ##}
+        {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'battery') | selectattr('state', '==', 'on') -%}
+          {% if not state.entity_id in exclude.entity_id -%}
+            {% set result.sensors = result.sensors + [state.name|replace(' Battery', '')|replace(' battery', '')] -%}
+          {% endif -%}
+        {% endfor -%}
+        {## Next check binary sensors that have the battery_low attribute - e.g., Abode sensors ##}
+        {% for state in states.binary_sensor | selectattr('attributes.battery_low', 'defined') | selectattr('attributes.battery_low') -%}
+          {% set result.sensors = result.sensors + [state.name|replace(' Battery', '')|replace(' battery', '')] -%}
+        {% endfor -%}
+        {## Next check binary sensors named barrier_sensor_low_battery_warning - e.g., GoControl garage door opener ##}
+        {% for state in states.binary_sensor -%}
+          {% if state.entity_id is match('.*barrier_sensor_low_battery_warning') and is_state(state.entity_id, 'on') -%}
+            {% set result.sensors = result.sensors + [state.name|replace(' Battery', '')|replace(' battery', '')] -%}
+          {% endif -%}
+        {% endfor -%}
+        {{ result.sensors }}
+      new_todos: >-
+        {% set result = namespace(todos=[]) -%}
+        {% for sensor in sensors -%}
+          {% set todo = ['Replace', sensor, 'battery']|join(' ') -%}
+          {% if todo not in all_todos[project.entity_id]['items']|map(attribute='summary') -%}
+            {% set result.todos = result.todos + [todo] -%}
+          {% endif -%}
+        {% endfor -%} {{ result.todos }}
+  - service: notify.mobile_app_tis_iphone
+    data:
+      message: "{{ new_todos | join(' ') }}"
+  - repeat:
+      for_each: "{{ new_todos }}"
+      sequence:
+        - service: todoist.new_task
+          data:
+            project: "{{ project.name }}"
+            content: "{{ repeat.item }}"
+            due_date_string: tomorrow at 9:00
+mode: single
+icon: mdi:checkbox-marked-circle-auto-outline
+

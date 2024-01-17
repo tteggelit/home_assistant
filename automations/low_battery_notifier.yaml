@@ -1,0 +1,13 @@
+alias: Low Battery Notification and Todo Generator
+description: >-
+  Find sensors that have low batteries that need a todo created, notify about
+  the sensor battery, and create a todo in Todoist
+trigger:
+  - platform: time
+    at: "09:00:00"
+condition: []
+action:
+  - service: script.low_battery_notifier
+    data: {}
+mode: single
+
