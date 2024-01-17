@@ -1,0 +1,16 @@
+alias: Garden Tower Pumps - Turn On
+description: Turn the Garden Tower pumps on after being off for 30 minutes
+trigger:
+  - platform: device
+    type: turned_off
+    entity_id: switch.garden_tower_pumps_switch
+    for:
+      hours: 0
+      minutes: 30
+      seconds: 0
+condition: []
+action:
+  - type: turn_on
+    entity_id: switch.garden_tower_pumps_switch
+mode: single
+

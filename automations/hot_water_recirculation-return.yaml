@@ -1,0 +1,25 @@
+alias: Recirculate Hot Water After Returning Home
+description: >-
+  Recirculate the hot water if we've been away from home for more than 30
+  minutes
+trigger:
+  - platform: state
+    entity_id:
+      - alarm_control_panel.abode_alarm
+    to: disarmed
+condition:
+  - condition: state
+    entity_id: binary_sensor.water_heater_recirculation
+    state: "off"
+    for:
+      hours: 0
+      minutes: 30
+      seconds: 0
+action:
+  - service: rinnai.start_recirculation
+    target:
+      entity_id: water_heater.home_basement_water_heater
+    data:
+      recirculation_minutes: 5
+mode: single
+

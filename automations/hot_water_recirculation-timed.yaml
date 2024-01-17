@@ -1,0 +1,43 @@
+alias: Timed Hot Water Recirculation
+description: >-
+  Recirculates hot water every 15 minutes but only while the alarm is disarmed
+  (i.e., someone's home and not sleeping) and not between 11:00pm and 4:30am
+trigger:
+  - platform: state
+    entity_id:
+      - binary_sensor.water_heater_recirculation
+    to: "off"
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+condition:
+  - condition: and
+    conditions:
+      - condition: time
+        after: "04:30:00"
+        before: "23:00:00"
+      - condition: state
+        entity_id: binary_sensor.water_heater_recirculation
+        state: "off"
+        for:
+          hours: 0
+          minutes: 5
+          seconds: 0
+        enabled: true
+      - condition: numeric_state
+        entity_id: sensor.home_basement_water_flow_rate
+        below: 1
+        enabled: true
+      - condition: device
+        domain: alarm_control_panel
+        entity_id: alarm_control_panel.abode_alarm
+        type: is_disarmed
+action:
+  - service: rinnai.start_recirculation
+    data:
+      recirculation_minutes: 5
+    target:
+      entity_id: water_heater.home_basement_water_heater
+mode: single
+

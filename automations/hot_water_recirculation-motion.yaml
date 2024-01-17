@@ -1,0 +1,32 @@
+alias: Motion Hot Water Recirculation
+description: >-
+  Recirculate the hot water when motion is detected in the any of the bathrooms
+  and water hasn't been recirculated in the last 15 minutes
+trigger:
+  - type: motion
+    platform: device
+    device_id: 12e8cfe6714711d0489661a17d830969
+    entity_id: 660d9aa59dcc2ec8a2470a5ab12ca565
+    domain: binary_sensor
+  - type: motion
+    platform: device
+    device_id: a93fa66cbf39be93b2cc978b63643c04
+    entity_id: 08544bb9a1736042c639783bd52fb023
+    domain: binary_sensor
+condition:
+  - condition: state
+    entity_id: binary_sensor.water_heater_recirculation
+    state: "off"
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+    enabled: false
+action:
+  - service: rinnai.start_recirculation
+    data:
+      recirculation_minutes: 5
+    target:
+      entity_id: water_heater.home_basement_water_heater
+mode: single
+

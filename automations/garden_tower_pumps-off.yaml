@@ -1,0 +1,16 @@
+alias: Garden Tower Pumps - Turn Off
+description: Turn the Garden Tower pumps off after being on for 5 minutes
+trigger:
+  - platform: device
+    type: turned_on
+    entity_id: switch.garden_tower_pumps_switch
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+condition: []
+action:
+  - type: turn_off
+    entity_id: switch.garden_tower_pumps_switch
+mode: single
+

@@ -1,0 +1,10 @@
+alias: Garden Tower Pumps - Toggle After Reboot
+description: Toggle the Garden Tower pump switch when Home Assistant starts
+trigger:
+  - platform: homeassistant
+    event: start
+action:
+  - type: toggle
+    entity_id: switch.garden_tower_pumps_switch
+mode: single
+
